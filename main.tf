@@ -61,6 +61,10 @@ resource "aws_route_table" "PublicRoute" {
 
 resource "aws_route_table" "PrivateRoute" {
   vpc_id = "${aws_vpc.DemoVPC.id}"
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = "${aws_nat_gateway.terraformNAT.id}"
+  }
 
   tags = {
     Name = "Private RT"
@@ -75,4 +79,21 @@ resource "aws_route_table_association" "public" {
 resource "aws_route_table_association" "private" {
   subnet_id      = "${aws_subnet.privateSubnet.id}"
   route_table_id = "${aws_route_table.PrivateRoute.id}"
+}
+
+resource "aws_eip" "ElaticIP"{
+  depends_on = [aws_internet_gateway.terraform-igw]
+
+  tags = {
+    Name = "TerraformElasticIP"
+  }
+}
+
+resource "aws_nat_gateway" "terraformNAT" {
+  allocation_id = aws_eip.ElaticIP.id
+  subnet_id = aws_subnet.publicSubnet.id
+
+  tags = {
+    Name = "Terraform NAT"
+  }
 }
